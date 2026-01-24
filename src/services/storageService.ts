@@ -3,14 +3,13 @@ import { db } from '../firebase';
 import { 
   collection, 
   getDocs, 
-  addDoc,
-  updateDoc, 
   deleteDoc,
   doc, 
   query, 
   orderBy,
   Timestamp,
-  setDoc
+  setDoc,
+  updateDoc
 } from 'firebase/firestore';
 
 const TRANSACTIONS_COLLECTION = 'transactions';
@@ -19,6 +18,18 @@ const BUDGETS_COLLECTION = 'budgets';
 // Key lưu LocalStorage
 const LOCAL_TX_KEY = 'finance_flow_transactions';
 const LOCAL_BUDGET_KEY = 'finance_flow_budgets';
+
+// --- HÀM MỚI: LÀM SẠCH DỮ LIỆU (FIX LỖI UNDEFINED) ---
+// Hàm này sẽ xóa bỏ các trường có giá trị undefined trước khi gửi lên Firebase
+const cleanData = (data: any) => {
+  const cleaned = { ...data };
+  Object.keys(cleaned).forEach(key => {
+    if (cleaned[key] === undefined) {
+      delete cleaned[key];
+    }
+  });
+  return cleaned;
+};
 
 export const StorageService = {
   // --- Helpers ---
@@ -61,20 +72,41 @@ export const StorageService = {
   },
 
   addTransaction: async (transaction: Transaction) => {
-    // 1. Lưu Local trước để giao diện cập nhật ngay (Optimistic UI)
+    // 1. Lưu Local trước (Optimistic UI)
     const local = StorageService.getLocal<Transaction>(LOCAL_TX_KEY);
     StorageService.saveLocal(LOCAL_TX_KEY, [transaction, ...local]);
 
-    // 2. Đẩy lên Firebase
+    // 2. Đẩy lên Firebase (ĐÃ FIX: Dùng cleanData để lọc lỗi)
     try {
-      // Dùng setDoc để giữ nguyên ID do frontend tạo ra (nếu có)
-      await setDoc(doc(db, TRANSACTIONS_COLLECTION, transaction.id), {
+      await setDoc(doc(db, TRANSACTIONS_COLLECTION, transaction.id), cleanData({
         ...transaction,
         updatedAt: Timestamp.now() 
-      });
+      }));
+      console.log("✅ Saved to Cloud:", transaction.id);
     } catch (error) {
-      console.error('Save to Cloud failed:', error);
-      // Có thể thêm logic hàng đợi (queue) để sync lại sau
+      console.error('❌ Save to Cloud failed:', error);
+    }
+  },
+
+  // Bổ sung hàm Update bị thiếu
+  updateTransaction: async (transaction: Transaction) => {
+    // 1. Update Local
+    const local = StorageService.getLocal<Transaction>(LOCAL_TX_KEY);
+    const index = local.findIndex(t => t.id === transaction.id);
+    if (index !== -1) {
+        local[index] = transaction;
+        StorageService.saveLocal(LOCAL_TX_KEY, local);
+    }
+
+    // 2. Update Cloud (ĐÃ FIX: Dùng cleanData)
+    try {
+        const docRef = doc(db, TRANSACTIONS_COLLECTION, transaction.id);
+        await updateDoc(docRef, cleanData({
+            ...transaction,
+            updatedAt: Timestamp.now()
+        }));
+    } catch (error) {
+        console.error('❌ Update Cloud failed:', error);
     }
   },
 
@@ -85,12 +117,11 @@ export const StorageService = {
     try {
       await deleteDoc(doc(db, TRANSACTIONS_COLLECTION, id));
     } catch (error) {
-      console.error('Delete from Cloud failed:', error);
+      console.error('❌ Delete from Cloud failed:', error);
     }
   },
 
   // --- Budgets ---
-  // (Logic tương tự như Transaction)
   getBudgets: async (): Promise<Budget[]> => {
     try {
       const snapshot = await getDocs(collection(db, BUDGETS_COLLECTION));
@@ -109,9 +140,9 @@ export const StorageService = {
      if (index >= 0) local[index] = budget; else local.push(budget);
      StorageService.saveLocal(LOCAL_BUDGET_KEY, local);
 
-     // Save Cloud
+     // Save Cloud (ĐÃ FIX: Dùng cleanData)
      try {
-       await setDoc(doc(db, BUDGETS_COLLECTION, budget.id), budget);
+       await setDoc(doc(db, BUDGETS_COLLECTION, budget.id), cleanData(budget));
      } catch (e) { console.error(e); }
   },
 
