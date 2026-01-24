@@ -1,5 +1,5 @@
 import React, { useState, useMemo } from 'react';
-import { Plus, X, AlertCircle, PiggyBank, Trash2, Loader2 } from 'lucide-react';
+import { Plus, X, AlertCircle, PiggyBank, Trash2 } from 'lucide-react';
 import { Budget, Transaction, TransactionType } from '../types';
 import { CATEGORY_ITEMS, getCategoryById } from '../constants';
 import { formatCurrency, generateId } from '../utils';
@@ -7,7 +7,6 @@ import { formatCurrency, generateId } from '../utils';
 interface BudgetViewProps {
   transactions: Transaction[];
   currentDate: Date;
-  // Dấu ? và mặc định [] giúp chống lỗi nếu App chưa kịp truyền dữ liệu
   budgets?: Budget[];
   onSaveBudget?: (budget: Budget) => Promise<void>;
   onDeleteBudget?: (id: string) => Promise<void>;
@@ -16,7 +15,6 @@ interface BudgetViewProps {
 export const BudgetView: React.FC<BudgetViewProps> = ({ 
     transactions, 
     currentDate, 
-    // QUAN TRỌNG: Gán mặc định là mảng rỗng
     budgets = [], 
     onSaveBudget, 
     onDeleteBudget 
@@ -25,15 +23,12 @@ export const BudgetView: React.FC<BudgetViewProps> = ({
   const [selectedCategory, setSelectedCategory] = useState(CATEGORY_ITEMS.filter(c => c.type === TransactionType.EXPENSE)[0].id);
   const [limitAmount, setLimitAmount] = useState('');
 
-  // Memoize danh sách danh mục
   const expenseCategories = useMemo(() => 
     CATEGORY_ITEMS.filter(c => c.type === TransactionType.EXPENSE),
   []);
 
   const handleSave = async () => {
     if (!limitAmount || !onSaveBudget) return;
-    
-    // Tìm budget cũ nếu có để cập nhật, dùng (budgets || []) để an toàn
     const safeBudgets = budgets || [];
     const existing = safeBudgets.find(b => b.categoryId === selectedCategory);
     
@@ -48,9 +43,7 @@ export const BudgetView: React.FC<BudgetViewProps> = ({
     setLimitAmount('');
   };
 
-  // TÍNH TOÁN AN TOÀN (FIX LỖI TREO APP TẠI ĐÂY)
   const budgetStats = useMemo(() => {
-    // Nếu dữ liệu chưa sẵn sàng, trả về rỗng ngay lập tức thay vì cố tính toán
     if (!transactions || !budgets) return [];
 
     const currentMonthExpenses = transactions.filter(t => {
@@ -60,7 +53,6 @@ export const BudgetView: React.FC<BudgetViewProps> = ({
              t.type === TransactionType.EXPENSE;
     });
 
-    // Dùng (budgets || []) để đảm bảo hàm .map luôn chạy trên một mảng
     return (budgets || []).map(budget => {
         const spent = currentMonthExpenses
             .filter(t => t.category === budget.categoryId)
@@ -75,21 +67,12 @@ export const BudgetView: React.FC<BudgetViewProps> = ({
           percent, 
           categoryName: category.name, 
           categoryIcon: category.icon, 
-          categoryColor: category.color 
+          categoryTheme: category.theme 
         };
     }).sort((a, b) => b.percent - a.percent);
   }, [budgets, transactions, currentDate]);
 
-  // Nếu App chưa truyền hàm xử lý, hiện thông báo lỗi đẹp thay vì màn hình trắng
-  if (!onSaveBudget || !onDeleteBudget) {
-      return (
-        <div className="p-8 text-center bg-rose-50 rounded-xl border border-rose-200 mt-4">
-            <AlertCircle className="w-10 h-10 text-rose-500 mx-auto mb-2" />
-            <p className="text-rose-600 font-bold">Chưa kết nối dữ liệu</p>
-            <p className="text-sm text-rose-500 mt-1">Đang chờ file App.tsx truyền hàm xử lý...</p>
-        </div>
-      );
-  }
+  if (!onSaveBudget || !onDeleteBudget) return null;
 
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
@@ -128,6 +111,8 @@ export const BudgetView: React.FC<BudgetViewProps> = ({
                       <label className="block text-xs font-bold text-slate-500 mb-1 uppercase tracking-wider">Amount</label>
                       <input 
                         type="number" 
+                        inputMode="decimal" // <--- THÊM DÒNG NÀY: Hiện bàn phím số
+                        pattern="[0-9]*"    // <--- THÊM DÒNG NÀY: Hỗ trợ iOS cũ
                         value={limitAmount}
                         onChange={(e) => setLimitAmount(e.target.value)}
                         placeholder="0"
@@ -142,6 +127,7 @@ export const BudgetView: React.FC<BudgetViewProps> = ({
           </div>
       )}
 
+      {/* Phần hiển thị danh sách Budget giữ nguyên */}
       <div className="grid grid-cols-1 gap-4">
           {budgetStats.length > 0 ? (
             budgetStats.map(stat => {
@@ -154,7 +140,7 @@ export const BudgetView: React.FC<BudgetViewProps> = ({
                     <div key={stat.id} className="bg-white dark:bg-slate-800 p-5 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700">
                         <div className="flex justify-between items-start mb-3">
                             <div className="flex items-center gap-3">
-                                <div className="p-2.5 rounded-xl bg-slate-50 dark:bg-slate-700 text-slate-600 dark:text-slate-300">
+                                <div className={`p-2.5 rounded-xl ${stat.categoryTheme}`}>
                                     <Icon className="w-6 h-6" />
                                 </div>
                                 <div>

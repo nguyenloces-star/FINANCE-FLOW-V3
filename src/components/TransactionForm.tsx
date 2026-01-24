@@ -153,6 +153,8 @@ export const TransactionForm: React.FC<TransactionFormProps> = ({
               <span className={`absolute left-4 top-1/2 -translate-y-1/2 text-xl font-bold ${textColor ? textColor : 'text-slate-400'}`}>₫</span>
               <input
                 type="number"
+                inputMode="decimal" // <--- THÊM DÒNG NÀY: Kích hoạt bàn phím số
+                pattern="[0-9]*"    // <--- THÊM DÒNG NÀY: Hỗ trợ iOS cũ
                 step="0.01"
                 min="0"
                 required
