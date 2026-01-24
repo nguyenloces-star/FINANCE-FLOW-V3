@@ -1,0 +1,49 @@
+:root {
+  --sat: env(safe-area-inset-top);
+  --sab: env(safe-area-inset-bottom);
+  --sal: env(safe-area-inset-left);
+  --sar: env(safe-area-inset-right);
+}
+
+html { 
+  scrollbar-gutter: stable; 
+  font-size: 17px;
+  height: 100%;
+  /* Prevent bounce effect on the whole page */
+  overscroll-behavior-y: none;
+}
+
+body {
+  font-family: 'Inter', sans-serif;
+  min-height: 100%;
+  /* iOS Optimization */
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overscroll-behavior-y: none;
+}
+
+/* Remove tap highlight on iOS */
+* {
+  -webkit-tap-highlight-color: transparent;
+}
+
+/* Input Zoom Fix for iOS - Forces 16px on inputs to prevent zooming */
+@media screen and (max-width: 768px) {
+  input, select, textarea {
+    font-size: 16px !important;
+  }
+}
+
+/* Utility for bottom safe area */
+.pb-safe {
+  padding-bottom: env(safe-area-inset-bottom);
+}
+
+/* Custom scrollbar for webkit */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #cbd5e1; border-radius: 4px; }
+::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+
+.dark ::-webkit-scrollbar-thumb { background: #475569; }
+.dark ::-webkit-scrollbar-thumb:hover { background: #64748b; }
