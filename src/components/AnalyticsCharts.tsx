@@ -14,40 +14,56 @@ interface AnalyticsChartsProps {
 
 export const AnalyticsCharts: React.FC<AnalyticsChartsProps> = ({ transactions, currentDate }) => {
   
-  // 1. Prepare Data for Area Chart (Daily Cash Flow)
+  // 1. Prepare Data for Area Chart (Daily Cash Flow) - LOGIC MỚI: CENTERED 7 DAYS
   const dailyData = useMemo(() => {
-    const daysInMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() + 1, 0).getDate();
-    // Create array for every day of the month
-    const data = Array.from({ length: daysInMonth }, (_, i) => {
-        const d = i + 1;
-        return {
-            date: `${d.toString().padStart(2, '0')}/${(currentDate.getMonth() + 1).toString().padStart(2, '0')}`,
-            dayIndex: d,
-            income: 0,
-            expense: 0
-        };
-    });
-
-    transactions.forEach(t => {
-      const d = new Date(t.date);
-      if (d.getMonth() === currentDate.getMonth() && d.getFullYear() === currentDate.getFullYear()) {
-        const day = d.getDate();
-        if (day >= 1 && day <= daysInMonth) {
-            if (t.type === TransactionType.INCOME) {
-            data[day - 1].income += t.amount;
-            } else {
-            data[day - 1].expense += t.amount;
-            }
-        }
-      }
-    });
+    const data = [];
     
-    // Slice to keep only the last 7 days
-    return data.slice(-7);
+    // Vòng lặp từ -3 (3 ngày trước) đến +3 (3 ngày sau)
+    for (let i = -3; i <= 3; i++) {
+        const targetDate = new Date(currentDate);
+        targetDate.setDate(currentDate.getDate() + i); // Cộng/Trừ ngày
+
+        // Format hiển thị trục X (dd/MM)
+        const dayStr = targetDate.getDate().toString().padStart(2, '0');
+        const monthStr = (targetDate.getMonth() + 1).toString().padStart(2, '0');
+        const dateDisplay = `${dayStr}/${monthStr}`;
+
+        // Tính tổng thu chi cho ngày này
+        let income = 0;
+        let expense = 0;
+
+        transactions.forEach(t => {
+            const tDate = new Date(t.date);
+            // So sánh chính xác ngày/tháng/năm
+            if (
+                tDate.getDate() === targetDate.getDate() &&
+                tDate.getMonth() === targetDate.getMonth() &&
+                tDate.getFullYear() === targetDate.getFullYear()
+            ) {
+                if (t.type === TransactionType.INCOME) {
+                    income += t.amount;
+                } else {
+                    expense += t.amount;
+                }
+            }
+        });
+
+        data.push({
+            date: dateDisplay, // Nhãn hiển thị (VD: 24/11)
+            fullDate: targetDate, // Để debug nếu cần
+            income,
+            expense
+        });
+    }
+
+    return data;
   }, [transactions, currentDate]);
 
   // 2. Prepare Data for Donut Charts
   const getCategoryData = (type: TransactionType) => {
+    // Lọc giao dịch theo THÁNG hiện tại (Logic PieChart vẫn giữ theo tháng để xem tổng quan)
+    // Nếu bạn muốn PieChart cũng chạy theo 7 ngày này thì báo tôi sửa nhé. 
+    // Hiện tại PieChart vẫn đang để theo tháng như thiết kế gốc.
     const relevantTransactions = transactions.filter(t => 
       t.type === type &&
       new Date(t.date).getMonth() === currentDate.getMonth() &&
@@ -126,12 +142,12 @@ export const AnalyticsCharts: React.FC<AnalyticsChartsProps> = ({ transactions, 
   return (
     <div className="space-y-8">
       
-      {/* Row 1: Cash Flow Trend */}
+      {/* Row 1: Cash Flow Trend (Centered 7 Days) */}
       <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-slate-100 dark:border-slate-700/50">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
             <div className="flex items-center gap-3">
                 <div className="w-1.5 h-8 bg-emerald-500 rounded-full"></div>
-                <h3 className="text-xl font-bold text-slate-800 dark:text-white">Cash Flow Trend (Daily)</h3>
+                <h3 className="text-xl font-bold text-slate-800 dark:text-white">Cash Flow Trend (7 Days)</h3>
             </div>
             <div className="flex items-center gap-4">
                 <div className="flex items-center gap-2 text-sm font-medium text-slate-600 dark:text-slate-300">
@@ -218,7 +234,7 @@ export const AnalyticsCharts: React.FC<AnalyticsChartsProps> = ({ transactions, 
                 </div>
             </div>
             
-            {/* Legend List Side - Cập nhật Scroll Flex */}
+            {/* Legend List Side */}
             <div className="w-full lg:w-7/12 flex-1 overflow-y-auto custom-scrollbar pr-2 min-h-0">
                 {incomeData.data.length > 0 ? (
                     <div className="space-y-3">
@@ -285,7 +301,7 @@ export const AnalyticsCharts: React.FC<AnalyticsChartsProps> = ({ transactions, 
                 </div>
             </div>
 
-            {/* Legend List Side - Cập nhật Scroll Flex */}
+            {/* Legend List Side */}
             <div className="w-full lg:w-7/12 flex-1 overflow-y-auto custom-scrollbar pr-2 min-h-0">
                  {expenseData.data.length > 0 ? (
                     <div className="space-y-3">
