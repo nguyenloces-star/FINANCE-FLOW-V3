@@ -1,4 +1,3 @@
-
 import React, { useMemo } from 'react';
 import { ChevronLeft, ChevronRight } from 'lucide-react';
 import { Transaction, TransactionType } from '../types';
@@ -39,13 +38,11 @@ export const YearlyView: React.FC<YearlyViewProps> = ({ transactions, year, onYe
         balance: m.income - m.expense
     }));
 
-    // Slice to keep only the last 5 months for better mobile density
-    return calculatedData.slice(-5);
+    // CẬP NHẬT: Trả về đủ 12 tháng (Bỏ slice(-5))
+    return calculatedData;
   }, [transactions, year]);
 
   const totals = useMemo(() => {
-    // Calculate totals based on FULL year data, not just the sliced display data
-    // So we recreate the full year aggregation logic briefly for accurate totals
      const fullYearData = Array.from({ length: 12 }, (_, i) => ({ income: 0, expense: 0 }));
      transactions.forEach((t) => {
       const tDate = new Date(t.date);
@@ -82,7 +79,6 @@ export const YearlyView: React.FC<YearlyViewProps> = ({ transactions, year, onYe
   }, [transactions, year]);
 
   const matrixData = useMemo(() => {
-      // 12 months rows
       const months = Array.from({length: 12}, (_, i) => ({
           monthIndex: i,
           monthName: getMonthName(i),
@@ -105,7 +101,6 @@ export const YearlyView: React.FC<YearlyViewProps> = ({ transactions, year, onYe
     const cats: Record<string, number> = {};
     matrixData.forEach(row => {
         Object.entries(row.categories).forEach(([catId, amount]) => {
-            // Fix: ensure amount is treated as number as Object.entries value might be inferred as unknown
             cats[catId] = (cats[catId] || 0) + (amount as number);
         });
     });
@@ -114,7 +109,6 @@ export const YearlyView: React.FC<YearlyViewProps> = ({ transactions, year, onYe
 
   return (
     <div className="space-y-6">
-       {/* Shared Design System: Navigator Card */}
        <div className="bg-white dark:bg-slate-800 rounded-2xl p-6 shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-slate-100 dark:border-slate-700/50 flex items-center justify-between">
         <button
           onClick={() => onYearChange(year - 1)}
@@ -124,7 +118,6 @@ export const YearlyView: React.FC<YearlyViewProps> = ({ transactions, year, onYe
         </button>
         <span className="text-xl font-bold text-slate-800 dark:text-white capitalize">{year}</span>
         <button
-          // Fix: Ensure the year prop is treated as a number in the arithmetic operation
           onClick={() => onYearChange((year as number) + 1)}
           className="p-3 rounded-full bg-slate-50 dark:bg-slate-700 text-slate-600 dark:text-slate-300 hover:bg-emerald-100 hover:text-emerald-600 dark:hover:bg-emerald-900/30 dark:hover:text-emerald-400 transition-all active:scale-95"
         >
@@ -133,9 +126,7 @@ export const YearlyView: React.FC<YearlyViewProps> = ({ transactions, year, onYe
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Chart Section */}
         <div className="lg:col-span-2 bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700">
-          {/* Custom Header matching AnalyticsCharts */}
           <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
             <div className="flex items-center">
                 <div className="w-1 h-6 bg-emerald-500 rounded-full mr-3"></div>
@@ -153,7 +144,6 @@ export const YearlyView: React.FC<YearlyViewProps> = ({ transactions, year, onYe
           
            <div className="h-[300px]">
             <ResponsiveContainer width="100%" height="100%">
-              {/* Updated margins for alignment */}
               <BarChart data={chartData} margin={{ top: 10, right: 0, left: 0, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
                 <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fill: '#64748b', fontSize: 12 }} dy={10} />
@@ -176,7 +166,6 @@ export const YearlyView: React.FC<YearlyViewProps> = ({ transactions, year, onYe
            </div>
         </div>
 
-        {/* Summary Cards */}
         <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700 h-full flex flex-col justify-center gap-6">
             <div className="text-center">
                 <p className="text-lg font-bold text-slate-800 dark:text-white mb-1">Total Income</p>
@@ -195,7 +184,6 @@ export const YearlyView: React.FC<YearlyViewProps> = ({ transactions, year, onYe
         </div>
       </div>
 
-      {/* Category Breakdown Matrix */}
       <div className="bg-white dark:bg-slate-800 rounded-2xl shadow-sm border border-slate-100 dark:border-slate-700 overflow-hidden">
         <div className="p-6 border-b border-slate-100 dark:border-slate-700">
             <h3 className="text-lg font-bold text-slate-800 dark:text-white">Category Breakdown</h3>
@@ -227,7 +215,6 @@ export const YearlyView: React.FC<YearlyViewProps> = ({ transactions, year, onYe
                     </td>
                 </tr>
                 ))}
-                {/* Grand Total Row */}
                 <tr className="bg-slate-100 dark:bg-slate-700 font-bold">
                     <td className="p-4 sticky left-0 z-10 bg-slate-100 dark:bg-slate-700 shadow-[2px_0_5px_-2px_rgba(0,0,0,0.1)] text-slate-800 dark:text-white">Grand Total</td>
                     {expenseCategories.map(cat => (
@@ -246,7 +233,3 @@ export const YearlyView: React.FC<YearlyViewProps> = ({ transactions, year, onYe
     </div>
   );
 };
-
-const Trash2Icon = ({className}:{className?:string}) => (
-    <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}><path d="M3 6h18"/><path d="M19 6v14c0 1-1 2-2 2H7c-1 0-2-1-2-2V6"/><path d="M8 6V4c0-1 1-2 2-2h4c1 0 2 1 2 2v2"/><line x1="10" x2="10" y1="11" y2="17"/><line x1="14" x2="14" y1="11" y2="17"/></svg>
-);

@@ -42,7 +42,7 @@ export const AnalyticsCharts: React.FC<AnalyticsChartsProps> = ({ transactions, 
       }
     });
     
-    // Slice to keep only the last 7 days for better mobile density
+    // Slice to keep only the last 7 days
     return data.slice(-7);
   }, [transactions, currentDate]);
 
@@ -77,7 +77,6 @@ export const AnalyticsCharts: React.FC<AnalyticsChartsProps> = ({ transactions, 
   const expenseData = useMemo(() => getCategoryData(TransactionType.EXPENSE), [transactions, currentDate]);
   const incomeData = useMemo(() => getCategoryData(TransactionType.INCOME), [transactions, currentDate]);
 
-  // Tooltip for Pie Charts
   const CustomPieTooltip = ({ active, payload }: any) => {
     if (active && payload && payload.length) {
         const data = payload[0];
@@ -104,7 +103,6 @@ export const AnalyticsCharts: React.FC<AnalyticsChartsProps> = ({ transactions, 
     return null;
   };
 
-  // Tooltip for Area Chart
   const CustomAreaTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
       return (
@@ -128,14 +126,13 @@ export const AnalyticsCharts: React.FC<AnalyticsChartsProps> = ({ transactions, 
   return (
     <div className="space-y-8">
       
-      {/* Row 1: Cash Flow Trend (Area Chart) */}
+      {/* Row 1: Cash Flow Trend */}
       <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-slate-100 dark:border-slate-700/50">
         <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
             <div className="flex items-center gap-3">
                 <div className="w-1.5 h-8 bg-emerald-500 rounded-full"></div>
                 <h3 className="text-xl font-bold text-slate-800 dark:text-white">Cash Flow Trend (Daily)</h3>
             </div>
-            {/* Custom Legend */}
             <div className="flex items-center gap-4">
                 <div className="flex items-center gap-2 text-sm font-medium text-slate-600 dark:text-slate-300">
                     <span className="w-3 h-3 rounded-full bg-emerald-600"></span> Income
@@ -174,37 +171,18 @@ export const AnalyticsCharts: React.FC<AnalyticsChartsProps> = ({ transactions, 
                 tickFormatter={(value) => new Intl.NumberFormat('en', { notation: "compact", compactDisplay: "short" }).format(value)}
               />
               <Tooltip content={<CustomAreaTooltip />} />
-              
-              <Area 
-                type="monotone" 
-                dataKey="income" 
-                name="Income" 
-                stroke="#059669" 
-                strokeWidth={3} 
-                fillOpacity={1} 
-                fill="url(#colorIncome)" 
-                activeDot={{ r: 6, strokeWidth: 0, fill: "#059669" }}
-              />
-              <Area 
-                type="monotone" 
-                dataKey="expense" 
-                name="Expense" 
-                stroke="#ea580c" 
-                strokeWidth={3} 
-                fillOpacity={1} 
-                fill="url(#colorExpense)" 
-                activeDot={{ r: 6, strokeWidth: 0, fill: "#ea580c" }}
-              />
+              <Area type="monotone" dataKey="income" name="Income" stroke="#059669" strokeWidth={3} fillOpacity={1} fill="url(#colorIncome)" activeDot={{ r: 6, strokeWidth: 0, fill: "#059669" }} />
+              <Area type="monotone" dataKey="expense" name="Expense" stroke="#ea580c" strokeWidth={3} fillOpacity={1} fill="url(#colorExpense)" activeDot={{ r: 6, strokeWidth: 0, fill: "#ea580c" }} />
             </AreaChart>
           </ResponsiveContainer>
         </div>
       </div>
 
-      {/* Row 2: Category Distributions (Side-by-Side Layout) */}
+      {/* Row 2: Category Distributions */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         
         {/* Income Distribution */}
-        <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-slate-100 dark:border-slate-700/50 flex flex-col h-[420px]">
+        <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-slate-100 dark:border-slate-700/50 flex flex-col h-[500px] lg:h-[420px]">
           <div className="flex items-center mb-6">
                 <div className="w-1 h-6 bg-emerald-500 rounded-full mr-3"></div>
                 <h3 className="text-lg font-bold text-slate-800 dark:text-white">Income Structure</h3>
@@ -232,32 +210,26 @@ export const AnalyticsCharts: React.FC<AnalyticsChartsProps> = ({ transactions, 
                     <Tooltip content={<CustomPieTooltip />} />
                   </PieChart>
                 </ResponsiveContainer>
-                {/* Center Text */}
                 <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none px-4">
                   <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-0.5">Total Income</span>
-                  <span 
-                    title={formatCurrency(incomeData.total)}
-                    className="text-sm font-extrabold text-emerald-700 dark:text-emerald-400 truncate w-full text-center max-w-[100px]"
-                  >
+                  <span title={formatCurrency(incomeData.total)} className="text-sm font-extrabold text-emerald-700 dark:text-emerald-400 truncate w-full text-center max-w-[100px]">
                     {formatCurrency(incomeData.total)}
                   </span>
                 </div>
             </div>
             
-            {/* Legend List Side */}
-            <div className="w-full lg:w-7/12 h-full overflow-y-auto custom-scrollbar pr-2">
+            {/* Legend List Side - Cập nhật Scroll Flex */}
+            <div className="w-full lg:w-7/12 flex-1 overflow-y-auto custom-scrollbar pr-2 min-h-0">
                 {incomeData.data.length > 0 ? (
                     <div className="space-y-3">
                          {incomeData.data.map((item) => (
                             <div key={item.name} className="flex items-center justify-between gap-3 p-2 hover:bg-slate-50 dark:hover:bg-slate-700/50 rounded-xl transition-colors group">
-                                {/* Left: Name */}
                                 <div className="flex items-center gap-2 min-w-0 flex-1 overflow-hidden">
                                     <div className="w-2.5 h-2.5 rounded-full flex-shrink-0 shadow-sm" style={{ backgroundColor: item.color }}></div>
                                     <span className="text-slate-700 dark:text-slate-300 font-semibold truncate text-sm group-hover:text-slate-900 dark:group-hover:text-white transition-colors">
                                         {item.name}
                                     </span>
                                 </div>
-                                {/* Right: Data */}
                                 <div className="flex items-center gap-3 flex-shrink-0">
                                     <span className="font-bold text-slate-800 dark:text-white text-sm whitespace-nowrap">
                                         {formatCurrency(item.value)}
@@ -277,7 +249,7 @@ export const AnalyticsCharts: React.FC<AnalyticsChartsProps> = ({ transactions, 
         </div>
 
         {/* Expense Distribution */}
-        <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-slate-100 dark:border-slate-700/50 flex flex-col h-[420px]">
+        <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-slate-100 dark:border-slate-700/50 flex flex-col h-[500px] lg:h-[420px]">
           <div className="flex items-center mb-6">
                 <div className="w-1 h-6 bg-rose-500 rounded-full mr-3"></div>
                 <h3 className="text-lg font-bold text-slate-800 dark:text-white">Expense Structure</h3>
@@ -305,32 +277,26 @@ export const AnalyticsCharts: React.FC<AnalyticsChartsProps> = ({ transactions, 
                     <Tooltip content={<CustomPieTooltip />} />
                   </PieChart>
                 </ResponsiveContainer>
-                {/* Center Text */}
                 <div className="absolute inset-0 flex flex-col items-center justify-center pointer-events-none px-4">
                   <span className="text-[10px] text-slate-400 font-bold uppercase tracking-wider mb-0.5">Total Expenses</span>
-                  <span 
-                    title={formatCurrency(expenseData.total)}
-                    className="text-sm font-extrabold text-rose-600 dark:text-rose-400 truncate w-full text-center max-w-[100px]"
-                  >
+                  <span title={formatCurrency(expenseData.total)} className="text-sm font-extrabold text-rose-600 dark:text-rose-400 truncate w-full text-center max-w-[100px]">
                     {formatCurrency(expenseData.total)}
                   </span>
                 </div>
             </div>
 
-            {/* Legend List Side */}
-            <div className="w-full lg:w-7/12 h-full overflow-y-auto custom-scrollbar pr-2">
+            {/* Legend List Side - Cập nhật Scroll Flex */}
+            <div className="w-full lg:w-7/12 flex-1 overflow-y-auto custom-scrollbar pr-2 min-h-0">
                  {expenseData.data.length > 0 ? (
                     <div className="space-y-3">
                          {expenseData.data.map((item) => (
                             <div key={item.name} className="flex items-center justify-between gap-3 p-2 hover:bg-slate-50 dark:hover:bg-slate-700/50 rounded-xl transition-colors group">
-                                {/* Left: Name */}
                                 <div className="flex items-center gap-2 min-w-0 flex-1 overflow-hidden">
                                     <div className="w-2.5 h-2.5 rounded-full flex-shrink-0 shadow-sm" style={{ backgroundColor: item.color }}></div>
                                     <span className="text-slate-700 dark:text-slate-300 font-semibold truncate text-sm group-hover:text-slate-900 dark:group-hover:text-white transition-colors">
                                         {item.name}
                                     </span>
                                 </div>
-                                {/* Right: Data */}
                                 <div className="flex items-center gap-3 flex-shrink-0">
                                     <span className="font-bold text-slate-800 dark:text-white text-sm whitespace-nowrap">
                                         {formatCurrency(item.value)}
