@@ -61,7 +61,6 @@ export const AnalyticsCharts: React.FC<AnalyticsChartsProps> = ({ transactions, 
 
   // 2. Prepare Data for Donut Charts
   const getCategoryData = (type: TransactionType) => {
-    // Lọc giao dịch theo THÁNG hiện tại
     const relevantTransactions = transactions.filter(t => 
       t.type === type &&
       new Date(t.date).getMonth() === currentDate.getMonth() &&
@@ -100,7 +99,7 @@ export const AnalyticsCharts: React.FC<AnalyticsChartsProps> = ({ transactions, 
         }
         
         return (
-            <div className="bg-white/95 dark:bg-slate-800/95 p-4 rounded-xl shadow-xl border border-slate-100 dark:border-slate-700 backdrop-blur-sm">
+            <div className="bg-white/95 dark:bg-slate-800/95 p-4 rounded-xl shadow-xl border border-slate-100 dark:border-slate-700 backdrop-blur-sm z-50">
                 <div className="flex items-center gap-2 mb-1">
                     <div className="w-2 h-2 rounded-full" style={{ backgroundColor: data.fill }}></div>
                     <p className="font-bold text-slate-800 dark:text-white">{data.name}</p>
@@ -120,7 +119,7 @@ export const AnalyticsCharts: React.FC<AnalyticsChartsProps> = ({ transactions, 
   const CustomAreaTooltip = ({ active, payload, label }: any) => {
     if (active && payload && payload.length) {
       return (
-        <div className="bg-white/95 dark:bg-slate-800/95 p-4 rounded-xl shadow-xl border border-slate-100 dark:border-slate-700 backdrop-blur-sm min-w-[180px]">
+        <div className="bg-white/95 dark:bg-slate-800/95 p-4 rounded-xl shadow-xl border border-slate-100 dark:border-slate-700 backdrop-blur-sm min-w-[180px] z-50">
           <p className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-2">{label}</p>
           {payload.map((entry: any, index: number) => (
             <div key={index} className="flex items-center justify-between gap-4 text-sm mb-2 last:mb-0">
@@ -196,13 +195,14 @@ export const AnalyticsCharts: React.FC<AnalyticsChartsProps> = ({ transactions, 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
         
         {/* Income Distribution */}
-        <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-slate-100 dark:border-slate-700/50 flex flex-col h-[500px] lg:h-[420px]">
-          <div className="flex items-center mb-6">
+        {/* FIX: Thêm overflow-hidden ở đây để khóa chiều cao thẻ */}
+        <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-slate-100 dark:border-slate-700/50 flex flex-col h-[500px] lg:h-[420px] overflow-hidden">
+          <div className="flex-none flex items-center mb-6">
                 <div className="w-1 h-6 bg-emerald-500 rounded-full mr-3"></div>
                 <h3 className="text-lg font-bold text-slate-800 dark:text-white">Income Structure</h3>
           </div>
-          {/* FIX: Thêm overflow-hidden vào parent */}
-          <div className="flex-1 flex flex-col lg:flex-row items-center lg:items-stretch gap-2 min-h-0 overflow-hidden">
+          {/* FIX: flex-1 min-h-0 đảm bảo nội dung co giãn đúng */}
+          <div className="flex-1 flex flex-col lg:flex-row items-center lg:items-stretch gap-2 min-h-0">
             {/* Chart Side */}
             <div className="relative w-full lg:w-5/12 h-[220px] lg:h-full flex-shrink-0">
                 <ResponsiveContainer width="100%" height="100%">
@@ -233,8 +233,8 @@ export const AnalyticsCharts: React.FC<AnalyticsChartsProps> = ({ transactions, 
                 </div>
             </div>
             
-            {/* Legend List Side - FIX: Thêm lg:h-full */}
-            <div className="w-full lg:w-7/12 flex-1 lg:h-full overflow-y-auto custom-scrollbar pr-2 min-h-0">
+            {/* Legend List Side */}
+            <div className="w-full lg:w-7/12 flex-1 lg:h-full overflow-y-auto custom-scrollbar pr-2">
                 {incomeData.data.length > 0 ? (
                     <div className="space-y-3">
                          {incomeData.data.map((item) => (
@@ -264,13 +264,14 @@ export const AnalyticsCharts: React.FC<AnalyticsChartsProps> = ({ transactions, 
         </div>
 
         {/* Expense Distribution */}
-        <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-slate-100 dark:border-slate-700/50 flex flex-col h-[500px] lg:h-[420px]">
-          <div className="flex items-center mb-6">
+        {/* FIX: Thêm overflow-hidden ở đây để khóa chiều cao thẻ */}
+        <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-slate-100 dark:border-slate-700/50 flex flex-col h-[500px] lg:h-[420px] overflow-hidden">
+          <div className="flex-none flex items-center mb-6">
                 <div className="w-1 h-6 bg-rose-500 rounded-full mr-3"></div>
                 <h3 className="text-lg font-bold text-slate-800 dark:text-white">Expense Structure</h3>
           </div>
-          {/* FIX: Thêm overflow-hidden vào parent */}
-          <div className="flex-1 flex flex-col lg:flex-row items-center lg:items-stretch gap-2 min-h-0 overflow-hidden">
+          {/* FIX: flex-1 min-h-0 đảm bảo nội dung co giãn đúng */}
+          <div className="flex-1 flex flex-col lg:flex-row items-center lg:items-stretch gap-2 min-h-0">
              {/* Chart Side */}
             <div className="relative w-full lg:w-5/12 h-[220px] lg:h-full flex-shrink-0">
                 <ResponsiveContainer width="100%" height="100%">
@@ -301,8 +302,8 @@ export const AnalyticsCharts: React.FC<AnalyticsChartsProps> = ({ transactions, 
                 </div>
             </div>
 
-            {/* Legend List Side - FIX: Thêm lg:h-full */}
-            <div className="w-full lg:w-7/12 flex-1 lg:h-full overflow-y-auto custom-scrollbar pr-2 min-h-0">
+            {/* Legend List Side */}
+            <div className="w-full lg:w-7/12 flex-1 lg:h-full overflow-y-auto custom-scrollbar pr-2">
                  {expenseData.data.length > 0 ? (
                     <div className="space-y-3">
                          {expenseData.data.map((item) => (
