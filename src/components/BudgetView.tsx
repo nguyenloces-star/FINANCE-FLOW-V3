@@ -61,8 +61,8 @@ export const BudgetView: React.FC<BudgetViewProps> = ({
         const percent = budget.limit > 0 ? Math.min((spent / budget.limit) * 100, 100) : 0;
         const category = getCategoryById(budget.categoryId);
         
-        // FIX: Ép kiểu any để tránh lỗi TypeScript khi thiếu field theme
-        const safeCategory = category as any; 
+        // FIX: Ép kiểu 'any' để bỏ qua kiểm tra lỗi theme
+        const safeCategory = category as any;
         
         return { 
           ...budget, 
@@ -70,7 +70,7 @@ export const BudgetView: React.FC<BudgetViewProps> = ({
           percent, 
           categoryName: category.name, 
           categoryIcon: category.icon, 
-          categoryTheme: safeCategory.theme || 'bg-slate-100 text-slate-600' // Giá trị mặc định an toàn
+          categoryTheme: safeCategory.theme || 'bg-slate-100 text-slate-600'
         };
     }).sort((a, b) => b.percent - a.percent);
   }, [budgets, transactions, currentDate]);
