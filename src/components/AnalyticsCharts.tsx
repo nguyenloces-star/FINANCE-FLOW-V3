@@ -61,9 +61,7 @@ export const AnalyticsCharts: React.FC<AnalyticsChartsProps> = ({ transactions, 
 
   // 2. Prepare Data for Donut Charts
   const getCategoryData = (type: TransactionType) => {
-    // Lọc giao dịch theo THÁNG hiện tại (Logic PieChart vẫn giữ theo tháng để xem tổng quan)
-    // Nếu bạn muốn PieChart cũng chạy theo 7 ngày này thì báo tôi sửa nhé. 
-    // Hiện tại PieChart vẫn đang để theo tháng như thiết kế gốc.
+    // Lọc giao dịch theo THÁNG hiện tại
     const relevantTransactions = transactions.filter(t => 
       t.type === type &&
       new Date(t.date).getMonth() === currentDate.getMonth() &&
@@ -203,7 +201,8 @@ export const AnalyticsCharts: React.FC<AnalyticsChartsProps> = ({ transactions, 
                 <div className="w-1 h-6 bg-emerald-500 rounded-full mr-3"></div>
                 <h3 className="text-lg font-bold text-slate-800 dark:text-white">Income Structure</h3>
           </div>
-          <div className="flex-1 flex flex-col lg:flex-row items-center gap-2 min-h-0">
+          {/* FIX: Thêm lg:items-stretch để ép chiều cao trên desktop */}
+          <div className="flex-1 flex flex-col lg:flex-row items-center lg:items-stretch gap-2 min-h-0">
             {/* Chart Side */}
             <div className="relative w-full lg:w-5/12 h-[220px] lg:h-full flex-shrink-0">
                 <ResponsiveContainer width="100%" height="100%">
@@ -270,7 +269,8 @@ export const AnalyticsCharts: React.FC<AnalyticsChartsProps> = ({ transactions, 
                 <div className="w-1 h-6 bg-rose-500 rounded-full mr-3"></div>
                 <h3 className="text-lg font-bold text-slate-800 dark:text-white">Expense Structure</h3>
           </div>
-          <div className="flex-1 flex flex-col lg:flex-row items-center gap-2 min-h-0">
+          {/* FIX: Thêm lg:items-stretch để ép chiều cao trên desktop */}
+          <div className="flex-1 flex flex-col lg:flex-row items-center lg:items-stretch gap-2 min-h-0">
              {/* Chart Side */}
             <div className="relative w-full lg:w-5/12 h-[220px] lg:h-full flex-shrink-0">
                 <ResponsiveContainer width="100%" height="100%">
