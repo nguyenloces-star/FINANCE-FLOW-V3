@@ -201,8 +201,8 @@ export const AnalyticsCharts: React.FC<AnalyticsChartsProps> = ({ transactions, 
                 <div className="w-1 h-6 bg-emerald-500 rounded-full mr-3"></div>
                 <h3 className="text-lg font-bold text-slate-800 dark:text-white">Income Structure</h3>
           </div>
-          {/* FIX: Thêm lg:items-stretch để ép chiều cao trên desktop */}
-          <div className="flex-1 flex flex-col lg:flex-row items-center lg:items-stretch gap-2 min-h-0">
+          {/* FIX: Thêm overflow-hidden vào parent */}
+          <div className="flex-1 flex flex-col lg:flex-row items-center lg:items-stretch gap-2 min-h-0 overflow-hidden">
             {/* Chart Side */}
             <div className="relative w-full lg:w-5/12 h-[220px] lg:h-full flex-shrink-0">
                 <ResponsiveContainer width="100%" height="100%">
@@ -233,8 +233,8 @@ export const AnalyticsCharts: React.FC<AnalyticsChartsProps> = ({ transactions, 
                 </div>
             </div>
             
-            {/* Legend List Side */}
-            <div className="w-full lg:w-7/12 flex-1 overflow-y-auto custom-scrollbar pr-2 min-h-0">
+            {/* Legend List Side - FIX: Thêm lg:h-full */}
+            <div className="w-full lg:w-7/12 flex-1 lg:h-full overflow-y-auto custom-scrollbar pr-2 min-h-0">
                 {incomeData.data.length > 0 ? (
                     <div className="space-y-3">
                          {incomeData.data.map((item) => (
@@ -269,8 +269,8 @@ export const AnalyticsCharts: React.FC<AnalyticsChartsProps> = ({ transactions, 
                 <div className="w-1 h-6 bg-rose-500 rounded-full mr-3"></div>
                 <h3 className="text-lg font-bold text-slate-800 dark:text-white">Expense Structure</h3>
           </div>
-          {/* FIX: Thêm lg:items-stretch để ép chiều cao trên desktop */}
-          <div className="flex-1 flex flex-col lg:flex-row items-center lg:items-stretch gap-2 min-h-0">
+          {/* FIX: Thêm overflow-hidden vào parent */}
+          <div className="flex-1 flex flex-col lg:flex-row items-center lg:items-stretch gap-2 min-h-0 overflow-hidden">
              {/* Chart Side */}
             <div className="relative w-full lg:w-5/12 h-[220px] lg:h-full flex-shrink-0">
                 <ResponsiveContainer width="100%" height="100%">
@@ -301,8 +301,8 @@ export const AnalyticsCharts: React.FC<AnalyticsChartsProps> = ({ transactions, 
                 </div>
             </div>
 
-            {/* Legend List Side */}
-            <div className="w-full lg:w-7/12 flex-1 overflow-y-auto custom-scrollbar pr-2 min-h-0">
+            {/* Legend List Side - FIX: Thêm lg:h-full */}
+            <div className="w-full lg:w-7/12 flex-1 lg:h-full overflow-y-auto custom-scrollbar pr-2 min-h-0">
                  {expenseData.data.length > 0 ? (
                     <div className="space-y-3">
                          {expenseData.data.map((item) => (
