@@ -61,13 +61,16 @@ export const BudgetView: React.FC<BudgetViewProps> = ({
         const percent = budget.limit > 0 ? Math.min((spent / budget.limit) * 100, 100) : 0;
         const category = getCategoryById(budget.categoryId);
         
+        // FIX: Ép kiểu any để tránh lỗi TypeScript khi thiếu field theme
+        const safeCategory = category as any; 
+        
         return { 
           ...budget, 
           spent, 
           percent, 
           categoryName: category.name, 
           categoryIcon: category.icon, 
-          categoryTheme: category.theme 
+          categoryTheme: safeCategory.theme || 'bg-slate-100 text-slate-600' // Giá trị mặc định an toàn
         };
     }).sort((a, b) => b.percent - a.percent);
   }, [budgets, transactions, currentDate]);
@@ -111,8 +114,8 @@ export const BudgetView: React.FC<BudgetViewProps> = ({
                       <label className="block text-xs font-bold text-slate-500 mb-1 uppercase tracking-wider">Amount</label>
                       <input 
                         type="number" 
-                        inputMode="decimal" // <--- THÊM DÒNG NÀY: Hiện bàn phím số
-                        pattern="[0-9]*"    // <--- THÊM DÒNG NÀY: Hỗ trợ iOS cũ
+                        inputMode="decimal" 
+                        pattern="[0-9]*"    
                         value={limitAmount}
                         onChange={(e) => setLimitAmount(e.target.value)}
                         placeholder="0"
@@ -127,7 +130,6 @@ export const BudgetView: React.FC<BudgetViewProps> = ({
           </div>
       )}
 
-      {/* Phần hiển thị danh sách Budget giữ nguyên */}
       <div className="grid grid-cols-1 gap-4">
           {budgetStats.length > 0 ? (
             budgetStats.map(stat => {
