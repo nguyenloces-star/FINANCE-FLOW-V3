@@ -268,7 +268,7 @@ export const AnalyticsCharts: React.FC<AnalyticsChartsProps> = ({ transactions, 
         <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-[0_8px_30px_rgb(0,0,0,0.04)] border border-slate-100 dark:border-slate-700/50 flex flex-col h-[500px] lg:h-[420px] overflow-hidden">
           <div className="flex-none flex items-center mb-6">
                 <div className="w-1 h-6 bg-rose-500 rounded-full mr-3"></div>
-                <h3 className="text-lg font-bold text-slate-800 dark:text-white">Expense Structure V3</h3>
+                <h3 className="text-lg font-bold text-slate-800 dark:text-white">Expense Structure V4</h3>
           </div>
           {/* FIX: flex-1 min-h-0 đảm bảo nội dung co giãn đúng */}
           <div className="flex-1 flex flex-col lg:flex-row items-center lg:items-stretch gap-2 min-h-0">
