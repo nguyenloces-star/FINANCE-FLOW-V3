@@ -1,9 +1,7 @@
 import * as XLSX from 'xlsx';
 import { Transaction, TransactionType } from './types';
-import { getCategoryById } from './constants';
 
 export const formatCurrency = (amount: number): string => {
-  // Use English locale for comma separator, append Vietnamese currency symbol
   return new Intl.NumberFormat('en-US').format(amount) + ' ₫';
 };
 
@@ -19,27 +17,31 @@ export const formatDate = (dateString: string): string => {
   return `${day}/${month}/${year}`;
 };
 
-export const getMonthName = (monthIndex: number): string => {
-  // English month names (Short)
-  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-  return months[monthIndex] || `M${monthIndex + 1}`;
+// Cập nhật để hỗ trợ đa ngôn ngữ nếu cần gọi riêng
+export const getMonthName = (monthIndex: number, monthNamesString?: string): string => {
+  if (monthNamesString) {
+      const months = monthNamesString.split(',');
+      return months[monthIndex] || `M${monthIndex + 1}`;
+  }
+  const defaultMonths = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+  return defaultMonths[monthIndex] || `M${monthIndex + 1}`;
 };
 
 export const getCurrentMonthISO = (): string => {
   const now = new Date();
-  return now.toISOString().slice(0, 7); // Returns YYYY-MM
+  return now.toISOString().slice(0, 7); 
 };
 
-export const exportToExcel = (transactions: Transaction[], filename: string = 'transactions.xlsx') => {
-  const data = transactions.map(t => {
-    const category = getCategoryById(t.category);
+// Đã thêm tham số t (hàm dịch) để xuất file Excel đúng ngôn ngữ
+export const exportToExcel = (transactions: Transaction[], t: (key: string) => string, filename: string = 'transactions.xlsx') => {
+  const data = transactions.map(tx => {
     return {
-      'Date': formatDate(t.date),
-      'Category': category.name,
-      'Type': t.type === TransactionType.INCOME ? 'Income' : 'Expense',
-      'Amount': t.amount,
-      'Note': t.note,
-      'Recurring': t.isRecurring ? 'Yes' : 'No'
+      [t('date')]: formatDate(tx.date),
+      [t('category')]: t(`cat_${tx.category}`),
+      [t('type')]: tx.type === TransactionType.INCOME ? t('income') : t('expense'),
+      [t('amount')]: tx.amount,
+      [t('note')]: tx.note,
+      [t('recurring')]: tx.isRecurring ? 'Yes' : 'No'
     };
   });
 

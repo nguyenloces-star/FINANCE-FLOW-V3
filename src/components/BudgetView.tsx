@@ -3,6 +3,7 @@ import { Plus, X, AlertCircle, PiggyBank, Trash2 } from 'lucide-react';
 import { Budget, Transaction, TransactionType } from '../types';
 import { CATEGORY_ITEMS, getCategoryById } from '../constants';
 import { formatCurrency, generateId } from '../utils';
+import { useLanguage } from '../contexts/LanguageContext';
 
 interface BudgetViewProps {
   transactions: Transaction[];
@@ -12,13 +13,11 @@ interface BudgetViewProps {
   onDeleteBudget?: (id: string) => Promise<void>;
 }
 
-export const BudgetView: React.FC<BudgetViewProps> = ({ 
-    transactions, 
-    currentDate, 
-    budgets = [], 
-    onSaveBudget, 
-    onDeleteBudget 
+// BỎ CHỮ "export" Ở ĐÂY, CHỈ GIỮ LẠI "const"
+const BudgetView: React.FC<BudgetViewProps> = ({ 
+    transactions, currentDate, budgets = [], onSaveBudget, onDeleteBudget 
 }) => {
+  const { t } = useLanguage();
   const [isAdding, setIsAdding] = useState(false);
   const [selectedCategory, setSelectedCategory] = useState(CATEGORY_ITEMS.filter(c => c.type === TransactionType.EXPENSE)[0].id);
   const [limitAmount, setLimitAmount] = useState('');
@@ -46,72 +45,70 @@ export const BudgetView: React.FC<BudgetViewProps> = ({
   const budgetStats = useMemo(() => {
     if (!transactions || !budgets) return [];
 
-    const currentMonthExpenses = transactions.filter(t => {
-      const d = new Date(t.date);
+    const currentMonthExpenses = transactions.filter(tx => {
+      const d = new Date(tx.date);
       return d.getMonth() === currentDate.getMonth() && 
              d.getFullYear() === currentDate.getFullYear() &&
-             t.type === TransactionType.EXPENSE;
+             tx.type === TransactionType.EXPENSE;
     });
 
     return (budgets || []).map(budget => {
         const spent = currentMonthExpenses
-            .filter(t => t.category === budget.categoryId)
-            .reduce((sum, t) => sum + t.amount, 0);
+            .filter(tx => tx.category === budget.categoryId)
+            .reduce((sum, tx) => sum + tx.amount, 0);
         
         const percent = budget.limit > 0 ? Math.min((spent / budget.limit) * 100, 100) : 0;
         const category = getCategoryById(budget.categoryId);
-        
-        // FIX: Ép kiểu 'any' để bỏ qua kiểm tra lỗi theme
         const safeCategory = category as any;
         
         return { 
           ...budget, 
           spent, 
           percent, 
-          categoryName: category.name, 
+          categoryName: t(`cat_${category.id}`), 
           categoryIcon: category.icon, 
           categoryTheme: safeCategory.theme || 'bg-slate-100 text-slate-600'
         };
     }).sort((a, b) => b.percent - a.percent);
-  }, [budgets, transactions, currentDate]);
+  }, [budgets, transactions, currentDate, t]);
 
   if (!onSaveBudget || !onDeleteBudget) return null;
 
   return (
     <div className="space-y-6 animate-in fade-in duration-500">
       <div className="flex justify-between items-center">
-        <h2 className="text-lg font-bold text-slate-800 dark:text-white">Monthly Budget</h2>
+        <h2 className="text-lg font-bold text-slate-800 dark:text-white">{t('monthlyBudget')}</h2>
         <button 
             onClick={() => setIsAdding(true)}
             className="flex items-center gap-2 bg-slate-900 dark:bg-emerald-600 text-white px-4 py-2 rounded-lg text-sm font-medium hover:opacity-90 transition-opacity shadow-sm"
         >
-            <Plus className="w-4 h-4" /> Setup
+            <Plus className="w-4 h-4" /> {t('setup')}
         </button>
       </div>
 
       {isAdding && (
           <div className="bg-white dark:bg-slate-800 p-6 rounded-2xl shadow-lg border border-slate-100 dark:border-slate-700 animate-in slide-in-from-top-4 duration-300">
               <div className="flex justify-between items-center mb-4">
-                  <h3 className="text-lg font-bold text-slate-800 dark:text-white">Set Budget Limit</h3>
+                  <h3 className="text-lg font-bold text-slate-800 dark:text-white">{t('setBudgetLimit')}</h3>
                   <button onClick={() => setIsAdding(false)} className="p-1 hover:bg-slate-100 dark:hover:bg-slate-700 rounded-full transition-colors">
                     <X className="w-5 h-5 text-slate-400" />
                   </button>
               </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
                   <div>
-                      <label className="block text-xs font-bold text-slate-500 mb-1 uppercase tracking-wider">Category</label>
+                      <label className="block text-xs font-bold text-slate-500 mb-1 uppercase tracking-wider">{t('category')}</label>
                       <select 
                         value={selectedCategory}
                         onChange={(e) => setSelectedCategory(e.target.value)}
                         className="w-full p-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-600 rounded-xl outline-none focus:ring-2 focus:ring-emerald-500 dark:text-white"
                       >
                           {expenseCategories.map(c => (
-                              <option key={c.id} value={c.id}>{c.name}</option>
+                              <option key={c.id} value={c.id}>{t(`cat_${c.id}`)}</option>
                           ))}
                       </select>
                   </div>
                   <div>
-                      <label className="block text-xs font-bold text-slate-500 mb-1 uppercase tracking-wider">Amount</label>
+                      <label className="block text-xs font-bold text-slate-500 mb-1 uppercase tracking-wider">{t('amount')}</label>
                       <input 
                         type="number" 
                         inputMode="decimal" 
@@ -125,7 +122,7 @@ export const BudgetView: React.FC<BudgetViewProps> = ({
                   </div>
               </div>
               <button onClick={handleSave} className="w-full bg-emerald-600 text-white py-3 rounded-xl font-bold hover:bg-emerald-700 transition-colors shadow-md shadow-emerald-600/20">
-                  Save Budget
+                  {t('saveBudget')}
               </button>
           </div>
       )}
@@ -157,16 +154,13 @@ export const BudgetView: React.FC<BudgetViewProps> = ({
                             </button>
                         </div>
                         <div className="relative w-full h-3 bg-slate-100 dark:bg-slate-700 rounded-full overflow-hidden">
-                            <div 
-                                className={`h-full rounded-full transition-all duration-500 ease-out ${progressColor}`} 
-                                style={{ width: `${stat.percent}%` }}
-                            ></div>
+                            <div className={`h-full rounded-full transition-all duration-500 ease-out ${progressColor}`} style={{ width: `${stat.percent}%` }}></div>
                         </div>
                         <div className="mt-2 flex justify-between items-center">
-                          <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">{stat.percent.toFixed(0)}% USED</span>
+                          <span className="text-[10px] font-bold text-slate-400 dark:text-slate-500 uppercase tracking-widest">{stat.percent.toFixed(0)}% {t('used')}</span>
                           {stat.percent >= 100 && (
                               <div className="flex items-center gap-1 text-[10px] text-rose-500 font-bold uppercase tracking-wide">
-                                  <AlertCircle className="w-3 h-3" /> Over Budget!
+                                  <AlertCircle className="w-3 h-3" /> {t('overBudget')}
                               </div>
                           )}
                         </div>
@@ -178,11 +172,14 @@ export const BudgetView: React.FC<BudgetViewProps> = ({
                 <div className="bg-slate-50 dark:bg-slate-900/50 w-16 h-16 rounded-full flex items-center justify-center mx-auto mb-4">
                   <PiggyBank className="w-8 h-8 text-slate-300" />
                 </div>
-                <p className="text-slate-400 text-sm font-medium">No budgets setup for this month.</p>
-                <button onClick={() => setIsAdding(true)} className="mt-4 text-emerald-600 dark:text-emerald-400 text-xs font-bold uppercase tracking-wider hover:underline">Create First Budget</button>
+                <p className="text-slate-400 text-sm font-medium">{t('noBudgetSetup')}</p>
+                <button onClick={() => setIsAdding(true)} className="mt-4 text-emerald-600 dark:text-emerald-400 text-xs font-bold uppercase tracking-wider hover:underline">{t('createFirstBudget')}</button>
             </div>
           )}
       </div>
     </div>
   );
 };
+
+// EXPORT DEFAULT CHUẨN XÁC Ở ĐÂY
+export default BudgetView;

@@ -27,7 +27,7 @@ export interface MonthlySummary {
   balance: number;
 }
 
-export type ViewMode = 'dashboard' | 'yearly' | 'budget';
+export type ViewMode = 'dashboard' | 'budget' | 'monthly' | 'yearly';
 
 export interface CategoryItem {
   id: string;

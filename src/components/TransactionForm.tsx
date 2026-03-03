@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { X, Save, Check, RefreshCw } from 'lucide-react';
-import { Transaction, TransactionType, RecurringFrequency } from '../types';
+import { X } from 'lucide-react';
+import { Transaction, TransactionType } from '../types';
 import { CATEGORY_ITEMS } from '../constants';
 import { generateId } from '../utils';
+import { useLanguage } from '../contexts/LanguageContext';
 
 interface TransactionFormProps {
   isOpen: boolean;
@@ -11,196 +12,118 @@ interface TransactionFormProps {
   initialData?: Transaction | null;
 }
 
-export const TransactionForm: React.FC<TransactionFormProps> = ({
-  isOpen,
-  onClose,
-  onSubmit,
-  initialData,
-}) => {
-  const [amount, setAmount] = useState('');
-  const [type, setType] = useState<TransactionType>(TransactionType.EXPENSE);
-  const [categoryId, setCategoryId] = useState('');
-  const [date, setDate] = useState(new Date().toISOString().slice(0, 10));
-  const [note, setNote] = useState('');
-  
-  // Recurring State
-  const [isRecurring, setIsRecurring] = useState(false);
-  const [frequency, setFrequency] = useState<RecurringFrequency>('monthly');
+export const TransactionForm: React.FC<TransactionFormProps> = ({ isOpen, onClose, onSubmit, initialData }) => {
+  const { t } = useLanguage();
 
-  // Reset or Load Data
+  const [type, setType] = useState<TransactionType>(TransactionType.EXPENSE);
+  const [amount, setAmount] = useState('');
+  const [category, setCategory] = useState('');
+  const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
+  const [note, setNote] = useState('');
+  const [isRecurring, setIsRecurring] = useState(false);
+  const [frequency, setFrequency] = useState<'monthly' | 'yearly'>('monthly');
+
   useEffect(() => {
-    if (isOpen) {
-      if (initialData) {
-        setAmount(initialData.amount.toString());
-        setType(initialData.type);
-        setCategoryId(initialData.category);
-        setDate(initialData.date);
-        setNote(initialData.note);
-        setIsRecurring(!!initialData.isRecurring);
-        setFrequency(initialData.frequency || 'monthly');
-      } else {
-        resetForm();
-      }
+    if (initialData) {
+      setType(initialData.type);
+      setAmount(initialData.amount.toString());
+      setCategory(initialData.category);
+      setDate(initialData.date);
+      setNote(initialData.note || '');
+      setIsRecurring(initialData.isRecurring || false);
+      setFrequency(initialData.frequency || 'monthly');
+    } else {
+      setType(TransactionType.EXPENSE);
+      setAmount('');
+      setCategory('');
+      setDate(new Date().toISOString().split('T')[0]);
+      setNote('');
+      setIsRecurring(false);
+      setFrequency('monthly');
     }
   }, [initialData, isOpen]);
 
-  const resetForm = () => {
-    setAmount('');
-    setType(TransactionType.EXPENSE);
-    const defaultCat = CATEGORY_ITEMS.find(c => c.type === TransactionType.EXPENSE);
-    setCategoryId(defaultCat?.id || '');
-    setDate(new Date().toISOString().slice(0, 10));
-    setNote('');
-    setIsRecurring(false);
-    setFrequency('monthly');
-  };
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!amount || !categoryId || !date) return;
-
-    const transaction: Transaction = {
-      id: initialData ? initialData.id : generateId(),
-      amount: parseFloat(amount),
-      type,
-      category: categoryId,
-      date,
-      note,
-      createdAt: initialData ? initialData.createdAt : Date.now(),
-      isRecurring,
-      frequency: isRecurring ? frequency : undefined,
-    };
-
-    onSubmit(transaction);
-    onClose();
-  };
+  if (!isOpen) return null;
 
   const currentCategories = CATEGORY_ITEMS.filter(c => c.type === type);
 
-  const bgColor = type === TransactionType.INCOME ? 'bg-emerald-600' : 'bg-rose-600';
-  const lightBgColor = type === TransactionType.INCOME ? 'bg-emerald-50 dark:bg-emerald-900/20' : 'bg-rose-50 dark:bg-rose-900/20';
-  const textColor = type === TransactionType.INCOME ? 'text-emerald-600 dark:text-emerald-400' : 'text-rose-600 dark:text-rose-400';
-  const borderColor = type === TransactionType.INCOME ? 'border-emerald-200 dark:border-emerald-800' : 'border-rose-200 dark:border-rose-800';
-  const ringColor = type === TransactionType.INCOME ? 'focus:ring-emerald-500' : 'focus:ring-rose-500';
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!amount || !category || !date) return;
 
-  if (!isOpen) return null;
+    onSubmit({
+      id: initialData?.id || generateId(),
+      type,
+      amount: parseFloat(amount),
+      category, // Lưu bằng ID gốc vào Database
+      date,
+      note,
+      isRecurring,
+      frequency: isRecurring ? frequency : undefined,
+      createdAt: initialData?.createdAt || Date.now()
+    });
+    onClose();
+  };
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-      {/* Backdrop */}
-      <div 
-        className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm transition-opacity" 
-        onClick={onClose}
-      />
-
-      {/* Modal Content */}
-      <div className="relative bg-white dark:bg-slate-800 rounded-3xl w-full max-w-lg shadow-2xl flex flex-col max-h-[90vh] animate-in zoom-in-95 duration-200 overflow-hidden border border-slate-100 dark:border-slate-700">
-        
+    <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center bg-slate-900/40 dark:bg-slate-900/60 backdrop-blur-sm p-0 sm:p-4">
+      <div className="bg-white dark:bg-slate-800 w-full max-w-lg rounded-t-3xl sm:rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
         {/* Header */}
-        <div className="flex justify-between items-center px-5 py-4 border-b border-slate-100 dark:border-slate-700">
-          <h2 className="text-lg font-bold text-slate-800 dark:text-white">
-            {initialData ? 'Edit Transaction' : 'Add Transaction'}
+        <div className="flex justify-between items-center p-5 border-b border-slate-100 dark:border-slate-700 flex-shrink-0">
+          <h2 className="text-xl font-bold text-slate-800 dark:text-white">
+            {initialData ? t('editTransaction') : t('addTransaction')}
           </h2>
-          <button onClick={onClose} className="p-2 bg-slate-100 dark:bg-slate-700 rounded-full hover:bg-slate-200 dark:hover:bg-slate-600 text-slate-500 dark:text-slate-400 transition-colors">
-            <X className="w-5 h-5" />
+          <button onClick={onClose} className="p-2 bg-slate-100 dark:bg-slate-700 hover:bg-slate-200 dark:hover:bg-slate-600 rounded-full transition-colors">
+            <X className="w-5 h-5 text-slate-500 dark:text-slate-300" />
           </button>
         </div>
 
-        <div className="overflow-y-auto p-5 space-y-5 custom-scrollbar">
-          
-          {/* Type Toggle */}
-          <div className="flex bg-slate-100 dark:bg-slate-700 p-1 rounded-xl">
-            <button
-              type="button"
-              onClick={() => {
-                setType(TransactionType.EXPENSE);
-                if (type !== TransactionType.EXPENSE) {
-                   const defaultCat = CATEGORY_ITEMS.find(c => c.type === TransactionType.EXPENSE);
-                   setCategoryId(defaultCat?.id || '');
-                }
-              }}
-              className={`flex-1 py-2 text-sm font-bold rounded-lg transition-all flex items-center justify-center gap-2 ${
-                type === TransactionType.EXPENSE
-                  ? 'bg-white dark:bg-slate-800 text-rose-600 dark:text-rose-400 shadow-sm'
-                  : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'
-              }`}
-            >
-              Expense
+        {/* Form Body */}
+        <div className="p-5 overflow-y-auto custom-scrollbar flex-1 space-y-6">
+          {/* Toggle Type */}
+          <div className="flex p-1 bg-slate-100 dark:bg-slate-900 rounded-xl">
+            <button type="button" onClick={() => { setType(TransactionType.EXPENSE); setCategory(''); }} className={`flex-1 py-2.5 text-sm font-bold rounded-lg transition-all ${type === TransactionType.EXPENSE ? 'bg-white dark:bg-slate-800 text-rose-500 shadow-sm' : 'text-slate-500 dark:text-slate-400'}`}>
+              {t('expense')}
             </button>
-            <button
-              type="button"
-              onClick={() => {
-                setType(TransactionType.INCOME);
-                if (type !== TransactionType.INCOME) {
-                   const defaultCat = CATEGORY_ITEMS.find(c => c.type === TransactionType.INCOME);
-                   setCategoryId(defaultCat?.id || '');
-                }
-              }}
-              className={`flex-1 py-2 text-sm font-bold rounded-lg transition-all flex items-center justify-center gap-2 ${
-                type === TransactionType.INCOME
-                  ? 'bg-white dark:bg-slate-800 text-emerald-600 dark:text-emerald-400 shadow-sm'
-                  : 'text-slate-500 dark:text-slate-400 hover:text-slate-700 dark:hover:text-slate-200'
-              }`}
-            >
-              Income
+            <button type="button" onClick={() => { setType(TransactionType.INCOME); setCategory(''); }} className={`flex-1 py-2.5 text-sm font-bold rounded-lg transition-all ${type === TransactionType.INCOME ? 'bg-white dark:bg-slate-800 text-emerald-600 shadow-sm' : 'text-slate-500 dark:text-slate-400'}`}>
+              {t('income')}
             </button>
           </div>
 
-          {/* Amount Input */}
-          <div className="space-y-1.5">
-            <label className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Amount</label>
-            <div className="relative group">
-              <span className={`absolute left-4 top-1/2 -translate-y-1/2 text-xl font-bold ${textColor ? textColor : 'text-slate-400'}`}>₫</span>
-              <input
-                type="number"
-                inputMode="decimal" // <--- THÊM DÒNG NÀY: Kích hoạt bàn phím số
-                pattern="[0-9]*"    // <--- THÊM DÒNG NÀY: Hỗ trợ iOS cũ
-                step="0.01"
-                min="0"
-                required
-                value={amount}
-                onChange={(e) => setAmount(e.target.value)}
-                className={`w-full pl-10 pr-4 py-3 bg-slate-50 dark:bg-slate-900 border-2 border-transparent rounded-2xl text-2xl font-bold text-slate-800 dark:text-white focus:outline-none focus:bg-white dark:focus:bg-slate-800 transition-all placeholder:text-slate-300 dark:placeholder:text-slate-600 ${ringColor} focus:border-transparent focus:ring-2`}
-                placeholder="0"
-              />
+          <div className="grid grid-cols-2 gap-4">
+            <div>
+              <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">{t('amount')}</label>
+              <input type="number" required min="0" step="any" value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="0.00" className="w-full p-3.5 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl outline-none focus:ring-2 focus:ring-emerald-500 dark:text-white text-lg font-bold" />
+            </div>
+            <div>
+              <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">{t('date')}</label>
+              <input type="date" required value={date} onChange={(e) => setDate(e.target.value)} className="w-full p-3.5 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl outline-none focus:ring-2 focus:ring-emerald-500 dark:text-white text-sm" />
             </div>
           </div>
 
-          {/* Date Picker */}
-          <div className="space-y-1.5">
-            <label className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Date</label>
-            <input
-              type="date"
-              required
-              value={date}
-              onChange={(e) => setDate(e.target.value)}
-              className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-200 dark:focus:ring-slate-600 text-sm font-medium text-slate-800 dark:text-white dark:[color-scheme:dark]"
-            />
-          </div>
-
-          {/* Category Grid */}
-          <div className="space-y-2">
-            <label className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Category</label>
-            <div className="grid grid-cols-3 sm:grid-cols-4 gap-2">
-              {currentCategories.map((cat) => {
-                const Icon = cat.icon;
-                const isSelected = categoryId === cat.id;
+          {/* ICON GRID CATEGORY */}
+          <div>
+            <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-3">{t('category')}</label>
+            <div className="grid grid-cols-3 sm:grid-cols-4 gap-3">
+              {currentCategories.map(c => {
+                const Icon = c.icon;
+                const isSelected = category === c.id;
+                const activeColor = type === TransactionType.EXPENSE ? 'border-rose-500 bg-rose-50 dark:bg-rose-900/20' : 'border-emerald-500 bg-emerald-50 dark:bg-emerald-900/20';
+                
                 return (
                   <button
-                    key={cat.id}
+                    key={c.id}
                     type="button"
-                    onClick={() => setCategoryId(cat.id)}
-                    className={`flex flex-col items-center gap-1.5 p-2 rounded-xl border-2 transition-all ${
-                      isSelected
-                        ? `${lightBgColor} ${borderColor} ${textColor}`
-                        : 'bg-white dark:bg-slate-800 border-transparent hover:bg-slate-50 dark:hover:bg-slate-700 hover:border-slate-100 dark:hover:border-slate-600 text-slate-500 dark:text-slate-400'
-                    }`}
+                    onClick={() => setCategory(c.id)}
+                    // THAY ĐỔI: justify-center để căn giữa hoàn toàn theo chiều dọc
+                    className={`flex flex-col items-center justify-center p-3 rounded-2xl border-2 transition-all duration-200 h-24 md:h-28 ${isSelected ? activeColor : 'border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-800 hover:border-slate-300 dark:hover:border-slate-600'}`}
                   >
-                    <div className={`p-1.5 rounded-full ${isSelected ? 'bg-white/50 dark:bg-slate-900/50' : 'bg-slate-100 dark:bg-slate-700'}`}>
-                      <Icon className="w-4 h-4" />
+                    <div className={`p-2.5 rounded-full mb-2 flex-shrink-0 ${isSelected ? (type === TransactionType.EXPENSE ? 'text-rose-600 bg-rose-100 dark:bg-rose-900/50' : 'text-emerald-600 bg-emerald-100 dark:bg-emerald-900/50') : 'text-slate-500 bg-slate-100 dark:bg-slate-700 dark:text-slate-300'}`}>
+                      <Icon className="w-5 h-5 md:w-6 md:h-6" />
                     </div>
-                    <span className="text-[10px] sm:text-xs font-semibold text-center leading-tight truncate w-full">
-                      {cat.name}
+                    {/* THAY ĐỔI: Tăng font size lên text-xs md:text-sm */}
+                    <span className={`text-xs md:text-sm leading-tight font-bold text-center break-words w-full ${isSelected ? (type === TransactionType.EXPENSE ? 'text-rose-700 dark:text-rose-400' : 'text-emerald-700 dark:text-emerald-400') : 'text-slate-600 dark:text-slate-400'}`}>
+                      {t(`cat_${c.id}`)}
                     </span>
                   </button>
                 );
@@ -208,60 +131,29 @@ export const TransactionForm: React.FC<TransactionFormProps> = ({
             </div>
           </div>
 
-          {/* Recurring Option */}
-          <div className="p-3 bg-slate-50 dark:bg-slate-700/50 rounded-xl space-y-2">
-             <div className="flex items-center gap-3">
-                <div className="relative flex items-center">
-                    <input 
-                        type="checkbox" 
-                        id="recurring" 
-                        checked={isRecurring}
-                        onChange={(e) => setIsRecurring(e.target.checked)}
-                        className="peer h-4 w-4 cursor-pointer appearance-none rounded border border-slate-300 dark:border-slate-600 bg-white dark:bg-slate-800 checked:bg-slate-900 dark:checked:bg-primary transition-all"
-                    />
-                    <Check className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-3 h-3 text-white opacity-0 peer-checked:opacity-100 pointer-events-none" />
-                </div>
-                <label htmlFor="recurring" className="flex items-center gap-2 text-sm font-semibold text-slate-700 dark:text-slate-300 cursor-pointer">
-                    <RefreshCw className="w-3.5 h-3.5 text-slate-400" />
-                    Recurring Transaction?
-                </label>
-             </div>
-             
-             {isRecurring && (
-                 <div className="pl-7 animate-in slide-in-from-top-2 duration-200">
-                     <select 
-                        value={frequency}
-                        onChange={(e) => setFrequency(e.target.value as RecurringFrequency)}
-                        className="w-full px-3 py-2 bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-600 rounded-lg text-sm text-slate-800 dark:text-white focus:outline-none focus:ring-2 focus:ring-slate-200"
-                     >
-                         <option value="monthly">Monthly</option>
-                         <option value="yearly">Yearly</option>
-                     </select>
-                 </div>
-             )}
+          <div>
+            <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">{t('note')}</label>
+            <input type="text" value={note} onChange={(e) => setNote(e.target.value)} placeholder="..." className="w-full p-3.5 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl outline-none focus:ring-2 focus:ring-emerald-500 dark:text-white" />
           </div>
 
-          {/* Note Input */}
-          <div className="space-y-1.5">
-            <label className="text-xs font-bold text-slate-400 dark:text-slate-500 uppercase tracking-wider">Note (Optional)</label>
-            <textarea
-              value={note}
-              onChange={(e) => setNote(e.target.value)}
-              rows={2}
-              className="w-full px-4 py-2.5 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl focus:outline-none focus:ring-2 focus:ring-slate-200 dark:focus:ring-slate-600 text-sm font-medium text-slate-800 dark:text-white resize-none"
-              placeholder="Description (optional)..."
-            />
+          <div className="flex items-center gap-3 p-4 bg-slate-50 dark:bg-slate-900 rounded-xl border border-slate-100 dark:border-slate-700">
+            <input type="checkbox" id="recurring" checked={isRecurring} onChange={(e) => setIsRecurring(e.target.checked)} className="w-5 h-5 rounded border-slate-300 text-emerald-600 focus:ring-emerald-500 cursor-pointer" />
+            <label htmlFor="recurring" className="text-sm font-semibold text-slate-700 dark:text-slate-300 cursor-pointer select-none flex-1">
+              {t('recurringTx')}
+            </label>
+            {isRecurring && (
+              <select value={frequency} onChange={(e) => setFrequency(e.target.value as any)} className="p-2 text-sm bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 rounded-lg outline-none focus:ring-2 focus:ring-emerald-500 dark:text-white">
+                <option value="monthly">{t('monthly')}</option>
+                <option value="yearly">{t('yearlyFreq')}</option>
+              </select>
+            )}
           </div>
         </div>
 
         {/* Footer */}
-        <div className="p-4 border-t border-slate-100 dark:border-slate-700 bg-white dark:bg-slate-800">
-          <button
-            onClick={handleSubmit}
-            className={`w-full flex items-center justify-center gap-2 ${bgColor} hover:opacity-90 text-white text-base font-bold py-3 rounded-xl transition-all shadow-lg active:scale-[0.98]`}
-          >
-            <Save className="w-5 h-5" />
-            Save Transaction
+        <div className="p-5 border-t border-slate-100 dark:border-slate-700 flex-shrink-0 bg-white dark:bg-slate-800">
+          <button onClick={handleSubmit} disabled={!amount || !category} className="w-full py-4 rounded-xl font-bold text-white transition-all disabled:opacity-50 disabled:cursor-not-allowed bg-emerald-600 hover:bg-emerald-700 shadow-lg shadow-emerald-600/20">
+            {t('save')}
           </button>
         </div>
       </div>
