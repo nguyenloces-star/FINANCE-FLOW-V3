@@ -55,7 +55,7 @@ export const TransactionForm: React.FC<TransactionFormProps> = ({ isOpen, onClos
       id: initialData?.id || generateId(),
       type,
       amount: parseFloat(amount),
-      category, // Lưu bằng ID gốc vào Database
+      category, 
       date,
       note,
       isRecurring,
@@ -93,7 +93,17 @@ export const TransactionForm: React.FC<TransactionFormProps> = ({ isOpen, onClos
           <div className="grid grid-cols-2 gap-4">
             <div>
               <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">{t('amount')}</label>
-              <input type="number" required min="0" step="any" value={amount} onChange={(e) => setAmount(e.target.value)} placeholder="0.00" className="w-full p-3.5 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl outline-none focus:ring-2 focus:ring-emerald-500 dark:text-white text-lg font-bold" />
+              <input 
+                type="number" 
+                inputMode="decimal" /* Đã thêm: Ép hiển thị bàn phím số Numpad trên Mobile */
+                required 
+                min="0" 
+                step="any" 
+                value={amount} 
+                onChange={(e) => setAmount(e.target.value)} 
+                placeholder="0.00" 
+                className="w-full p-3.5 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl outline-none focus:ring-2 focus:ring-emerald-500 dark:text-white text-lg font-bold" 
+              />
             </div>
             <div>
               <label className="block text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">{t('date')}</label>
@@ -115,14 +125,13 @@ export const TransactionForm: React.FC<TransactionFormProps> = ({ isOpen, onClos
                     key={c.id}
                     type="button"
                     onClick={() => setCategory(c.id)}
-                    // THAY ĐỔI: justify-center để căn giữa hoàn toàn theo chiều dọc
                     className={`flex flex-col items-center justify-center p-3 rounded-2xl border-2 transition-all duration-200 h-24 md:h-28 ${isSelected ? activeColor : 'border-slate-100 dark:border-slate-800 bg-white dark:bg-slate-800 hover:border-slate-300 dark:hover:border-slate-600'}`}
                   >
                     <div className={`p-2.5 rounded-full mb-2 flex-shrink-0 ${isSelected ? (type === TransactionType.EXPENSE ? 'text-rose-600 bg-rose-100 dark:bg-rose-900/50' : 'text-emerald-600 bg-emerald-100 dark:bg-emerald-900/50') : 'text-slate-500 bg-slate-100 dark:bg-slate-700 dark:text-slate-300'}`}>
                       <Icon className="w-5 h-5 md:w-6 md:h-6" />
                     </div>
-                    {/* THAY ĐỔI: Tăng font size lên text-xs md:text-sm */}
-                    <span className={`text-xs md:text-sm leading-tight font-bold text-center break-words w-full ${isSelected ? (type === TransactionType.EXPENSE ? 'text-rose-700 dark:text-rose-400' : 'text-emerald-700 dark:text-emerald-400') : 'text-slate-600 dark:text-slate-400'}`}>
+                    {/* Đã sửa: Giảm font size xuống text-[10px] md:text-xs để cân đối và không bị vỡ layout */}
+                    <span className={`text-[10px] md:text-xs leading-tight font-bold text-center break-words w-full ${isSelected ? (type === TransactionType.EXPENSE ? 'text-rose-700 dark:text-rose-400' : 'text-emerald-700 dark:text-emerald-400') : 'text-slate-600 dark:text-slate-400'}`}>
                       {t(`cat_${c.id}`)}
                     </span>
                   </button>
