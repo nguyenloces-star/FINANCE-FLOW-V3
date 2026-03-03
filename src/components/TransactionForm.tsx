@@ -16,7 +16,7 @@ export const TransactionForm: React.FC<TransactionFormProps> = ({ isOpen, onClos
   const { t } = useLanguage();
 
   const [type, setType] = useState<TransactionType>(TransactionType.EXPENSE);
-  const [amount, setAmount] = useState(''); // State chỉ lưu chuỗi số nguyên (VD: "1000000")
+  const [amount, setAmount] = useState(''); // State lưu giá trị nguyên thủy (chỉ gồm số)
   const [category, setCategory] = useState('');
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
   const [note, setNote] = useState('');
@@ -47,14 +47,13 @@ export const TransactionForm: React.FC<TransactionFormProps> = ({ isOpen, onClos
 
   const currentCategories = CATEGORY_ITEMS.filter(c => c.type === type);
 
-  // XỬ LÝ NHẬP SỐ TIỀN: Chỉ cho phép lưu số, chặn mọi ký tự chữ/đặc biệt
+  // XỬ LÝ NHẬP SỐ TIỀN: Lọc bỏ toàn bộ chữ, khoảng trắng và dấu phẩy khi người dùng gõ hoặc dán
   const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    // Regex \D nghĩa là "không phải số". Dòng này sẽ xóa sạch mọi thứ không phải số (kể cả phẩy)
-    const rawValue = e.target.value.replace(/\D/g, '');
+    const rawValue = e.target.value.replace(/\D/g, ''); // \D là regex loại bỏ các ký tự không phải là số (0-9)
     setAmount(rawValue);
   };
 
-  // FORMAT HIỂN THỊ: Tự động gắn dấu phẩy ngăn cách hàng nghìn
+  // FORMAT HIỂN THỊ: Tự động thêm dấu phẩy sau mỗi 3 chữ số
   const displayAmount = amount ? amount.replace(/\B(?=(\d{3})+(?!\d))/g, ',') : '';
 
   const handleSubmit = (e: React.FormEvent) => {
@@ -64,7 +63,7 @@ export const TransactionForm: React.FC<TransactionFormProps> = ({ isOpen, onClos
     onSubmit({
       id: initialData?.id || generateId(),
       type,
-      amount: parseFloat(amount), // Chuyển đổi an toàn về số thực khi lưu
+      amount: parseFloat(amount), // Convert chuỗi số sạch về dạng Number để lưu Database
       category, 
       date,
       note,
@@ -102,14 +101,14 @@ export const TransactionForm: React.FC<TransactionFormProps> = ({ isOpen, onClos
             </button>
           </div>
 
-          {/* ĐÃ FIX: Flexbox chia tỷ lệ Amount (nhiều hơn) và Date (ít hơn), đồng bộ Height h-12/h-14 */}
-          <div className="flex gap-3 sm:gap-4 items-end">
+          {/* Amount & Date - Flex layout đồng bộ chiều cao tuyệt đối h-12 (Mobile) / h-14 (Desktop) */}
+          <div className="flex gap-3 sm:gap-4 items-end w-full">
             <div className="flex-[3]">
               <label className="block text-[10px] sm:text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">{t('amount')}</label>
               <input 
                 type="text" 
-                inputMode="numeric" /* Gọi bàn phím Numpad cực chuẩn trên Mobile */
-                pattern="[0-9]*"    /* Phối hợp với inputMode để ép iOS hiện bàn phím Dial-pad */
+                inputMode="numeric" /* Chuẩn Numpad cho iOS/Android */
+                pattern="[0-9]*"    /* Bắt buộc đi kèm inputMode trên iOS */
                 required 
                 value={displayAmount} 
                 onChange={handleAmountChange} 
@@ -148,7 +147,7 @@ export const TransactionForm: React.FC<TransactionFormProps> = ({ isOpen, onClos
                     <div className={`p-2 sm:p-2.5 rounded-full mb-1 sm:mb-2 flex-shrink-0 ${isSelected ? (type === TransactionType.EXPENSE ? 'text-rose-600 bg-rose-100 dark:bg-rose-900/50' : 'text-emerald-600 bg-emerald-100 dark:bg-emerald-900/50') : 'text-slate-500 bg-slate-100 dark:bg-slate-700 dark:text-slate-300'}`}>
                       <Icon className="w-5 h-5 sm:w-6 sm:h-6" />
                     </div>
-                    {/* ĐÃ FIX: Chống cắt đôi chữ bằng break-normal, thu hẹp khoảng cách tracking-tight */}
+                    {/* Chống cắt ký tự orphan bằng break-normal và thu nhỏ tracking */}
                     <span className={`text-[10px] md:text-xs leading-tight font-bold text-center tracking-tight px-1 break-normal w-full ${isSelected ? (type === TransactionType.EXPENSE ? 'text-rose-700 dark:text-rose-400' : 'text-emerald-700 dark:text-emerald-400') : 'text-slate-600 dark:text-slate-400'}`}>
                       {t(`cat_${c.id}`)}
                     </span>
