@@ -16,7 +16,7 @@ export const TransactionForm: React.FC<TransactionFormProps> = ({ isOpen, onClos
   const { t } = useLanguage();
 
   const [type, setType] = useState<TransactionType>(TransactionType.EXPENSE);
-  const [amount, setAmount] = useState(''); // State lưu giá trị gốc (không có dấu phẩy)
+  const [amount, setAmount] = useState(''); // State chỉ lưu chuỗi số nguyên (VD: "1000000")
   const [category, setCategory] = useState('');
   const [date, setDate] = useState(new Date().toISOString().split('T')[0]);
   const [note, setNote] = useState('');
@@ -47,21 +47,15 @@ export const TransactionForm: React.FC<TransactionFormProps> = ({ isOpen, onClos
 
   const currentCategories = CATEGORY_ITEMS.filter(c => c.type === type);
 
-  // XỬ LÝ SỐ TIỀN: Lọc bỏ dấu phẩy, chỉ giữ lại số và 1 dấu chấm thập phân
+  // XỬ LÝ NHẬP SỐ TIỀN: Chỉ cho phép lưu số, chặn mọi ký tự chữ/đặc biệt
   const handleAmountChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const rawValue = e.target.value.replace(/,/g, '');
-    if (/^\d*\.?\d*$/.test(rawValue)) {
-      setAmount(rawValue);
-    }
+    // Regex \D nghĩa là "không phải số". Dòng này sẽ xóa sạch mọi thứ không phải số (kể cả phẩy)
+    const rawValue = e.target.value.replace(/\D/g, '');
+    setAmount(rawValue);
   };
 
-  // FORMAT HIỂN THỊ: Thêm dấu phẩy tự động ngăn cách hàng nghìn
-  const formatDisplayAmount = (val: string) => {
-    if (!val) return '';
-    const parts = val.split('.');
-    parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ',');
-    return parts.length > 1 ? `${parts[0]}.${parts[1]}` : parts[0];
-  };
+  // FORMAT HIỂN THỊ: Tự động gắn dấu phẩy ngăn cách hàng nghìn
+  const displayAmount = amount ? amount.replace(/\B(?=(\d{3})+(?!\d))/g, ',') : '';
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -70,7 +64,7 @@ export const TransactionForm: React.FC<TransactionFormProps> = ({ isOpen, onClos
     onSubmit({
       id: initialData?.id || generateId(),
       type,
-      amount: parseFloat(amount),
+      amount: parseFloat(amount), // Chuyển đổi an toàn về số thực khi lưu
       category, 
       date,
       note,
@@ -84,6 +78,7 @@ export const TransactionForm: React.FC<TransactionFormProps> = ({ isOpen, onClos
   return (
     <div className="fixed inset-0 z-[100] flex items-end sm:items-center justify-center bg-slate-900/40 dark:bg-slate-900/60 backdrop-blur-sm p-0 sm:p-4 animate-in fade-in duration-200">
       <div className="bg-white dark:bg-slate-800 w-full max-w-lg rounded-t-3xl sm:rounded-3xl shadow-2xl overflow-hidden flex flex-col max-h-[90vh] animate-in slide-in-from-bottom-4 sm:slide-in-from-bottom-0 sm:zoom-in-95 duration-300">
+        
         {/* Header */}
         <div className="flex justify-between items-center p-5 border-b border-slate-100 dark:border-slate-700 flex-shrink-0">
           <h2 className="text-xl font-bold text-slate-800 dark:text-white">
@@ -96,6 +91,7 @@ export const TransactionForm: React.FC<TransactionFormProps> = ({ isOpen, onClos
 
         {/* Form Body */}
         <div className="p-4 sm:p-5 overflow-y-auto custom-scrollbar flex-1 space-y-5 sm:space-y-6">
+          
           {/* Toggle Type */}
           <div className="flex p-1 bg-slate-100 dark:bg-slate-900 rounded-xl">
             <button type="button" onClick={() => { setType(TransactionType.EXPENSE); setCategory(''); }} className={`flex-1 py-2.5 text-sm font-bold rounded-lg transition-all ${type === TransactionType.EXPENSE ? 'bg-white dark:bg-slate-800 text-rose-500 shadow-sm' : 'text-slate-500 dark:text-slate-400'}`}>
@@ -106,28 +102,29 @@ export const TransactionForm: React.FC<TransactionFormProps> = ({ isOpen, onClos
             </button>
           </div>
 
-          {/* ĐÃ CHỈNH SỬA: Flexbox chia tỷ lệ Amount (nhiều hơn) và Date, đồng bộ Height h-12/h-14 */}
-          <div className="flex gap-3 sm:gap-4">
-            <div className="flex-[5]">
-              <label className="block text-[10px] sm:text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5 sm:mb-2">{t('amount')}</label>
+          {/* ĐÃ FIX: Flexbox chia tỷ lệ Amount (nhiều hơn) và Date (ít hơn), đồng bộ Height h-12/h-14 */}
+          <div className="flex gap-3 sm:gap-4 items-end">
+            <div className="flex-[3]">
+              <label className="block text-[10px] sm:text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">{t('amount')}</label>
               <input 
                 type="text" 
-                inputMode="decimal"
+                inputMode="numeric" /* Gọi bàn phím Numpad cực chuẩn trên Mobile */
+                pattern="[0-9]*"    /* Phối hợp với inputMode để ép iOS hiện bàn phím Dial-pad */
                 required 
-                value={formatDisplayAmount(amount)} 
+                value={displayAmount} 
                 onChange={handleAmountChange} 
                 placeholder="0" 
                 className="w-full h-12 sm:h-14 px-3 sm:px-4 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl outline-none focus:ring-2 focus:ring-emerald-500 dark:text-white text-base sm:text-lg font-bold transition-all" 
               />
             </div>
-            <div className="flex-[3]">
-              <label className="block text-[10px] sm:text-xs font-bold text-slate-500 uppercase tracking-wider mb-1.5 sm:mb-2">{t('date')}</label>
+            <div className="flex-[2]">
+              <label className="block text-[10px] sm:text-xs font-bold text-slate-500 uppercase tracking-wider mb-2">{t('date')}</label>
               <input 
                 type="date" 
                 required 
                 value={date} 
                 onChange={(e) => setDate(e.target.value)} 
-                className="w-full h-12 sm:h-14 px-2 sm:px-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl outline-none focus:ring-2 focus:ring-emerald-500 dark:text-white text-xs sm:text-sm font-semibold transition-all" 
+                className="w-full h-12 sm:h-14 px-2 sm:px-3 bg-slate-50 dark:bg-slate-900 border border-slate-200 dark:border-slate-700 rounded-xl outline-none focus:ring-2 focus:ring-emerald-500 dark:text-white text-xs sm:text-sm font-semibold transition-all appearance-none" 
               />
             </div>
           </div>
@@ -151,8 +148,8 @@ export const TransactionForm: React.FC<TransactionFormProps> = ({ isOpen, onClos
                     <div className={`p-2 sm:p-2.5 rounded-full mb-1 sm:mb-2 flex-shrink-0 ${isSelected ? (type === TransactionType.EXPENSE ? 'text-rose-600 bg-rose-100 dark:bg-rose-900/50' : 'text-emerald-600 bg-emerald-100 dark:bg-emerald-900/50') : 'text-slate-500 bg-slate-100 dark:bg-slate-700 dark:text-slate-300'}`}>
                       <Icon className="w-5 h-5 sm:w-6 sm:h-6" />
                     </div>
-                    {/* ĐÃ CHỈNH SỬA: Xóa break-words, dùng tracking-tight và px-0.5 để chữ tự động co giãn đẹp mắt, không rớt ký tự */}
-                    <span className={`text-[10px] md:text-xs leading-tight font-bold text-center tracking-tight px-0.5 whitespace-normal w-full ${isSelected ? (type === TransactionType.EXPENSE ? 'text-rose-700 dark:text-rose-400' : 'text-emerald-700 dark:text-emerald-400') : 'text-slate-600 dark:text-slate-400'}`}>
+                    {/* ĐÃ FIX: Chống cắt đôi chữ bằng break-normal, thu hẹp khoảng cách tracking-tight */}
+                    <span className={`text-[10px] md:text-xs leading-tight font-bold text-center tracking-tight px-1 break-normal w-full ${isSelected ? (type === TransactionType.EXPENSE ? 'text-rose-700 dark:text-rose-400' : 'text-emerald-700 dark:text-emerald-400') : 'text-slate-600 dark:text-slate-400'}`}>
                       {t(`cat_${c.id}`)}
                     </span>
                   </button>
